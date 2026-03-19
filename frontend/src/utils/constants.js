@@ -31,7 +31,6 @@ export const NAV_ITEMS = [
   { path: '/', label: 'Dashboard', icon: Plane },
   { path: '/airports', label: 'Airports', icon: Building2 },
   { path: '/aircraft', label: 'Aircraft', icon: PlaneTakeoff },
-  { path: '/operators', label: 'Operators', icon: Building },
   { path: '/tracking', label: 'Tracking', icon: Map },
   { path: '/safety', label: 'Safety', icon: Shield },
   { path: '/sanctions', label: 'Sanctions', icon: AlertTriangle },

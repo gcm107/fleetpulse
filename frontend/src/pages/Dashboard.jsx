@@ -215,11 +215,11 @@ export default function Dashboard() {
           subtext="FAA registrations"
         />
         <StatCard
-          icon={Building}
-          label="Operators"
-          value={stats?.operators != null ? Number(stats.operators).toLocaleString() : '--'}
+          icon={Activity}
+          label="Safety Scores"
+          value={stats?.aircraft != null ? Number(stats.aircraft).toLocaleString() : '--'}
           color="text-orange-400"
-          subtext="Certified operators"
+          subtext="Aircraft scored"
         />
         <StatCard
           icon={Activity}
@@ -330,7 +330,7 @@ export default function Dashboard() {
                 Quick Search
               </h3>
               <p className="text-xs text-gray-500">
-                Find airports, aircraft, or operators. Try "KJFK" or "N12345".
+                Find airports or aircraft. Try "KJFK", "N476CA", or "Gulfstream".
               </p>
             </div>
             <Link

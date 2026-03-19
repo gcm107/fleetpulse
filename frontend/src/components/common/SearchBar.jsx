@@ -120,7 +120,7 @@ export default function SearchBar() {
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           onFocus={() => { if (hasResults) setIsOpen(true); }}
-          placeholder="Search airports, aircraft, operators..."
+          placeholder="Search airports, aircraft..."
           className="input-dark w-full pl-10 pr-10 py-2 text-sm"
         />
         {loading && (
@@ -145,6 +145,7 @@ export default function SearchBar() {
           {hasResults ? (
             Object.entries(results).map(([category, items]) => {
               if (!Array.isArray(items) || items.length === 0) return null;
+              if (category === 'operators') return null;
               const Icon = CATEGORY_ICONS[category] || Building2;
               return (
                 <div key={category}>

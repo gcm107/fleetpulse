@@ -35,14 +35,7 @@ const CATEGORY_CONFIG = {
     getSubtitle: (item) => [item.manufacturer, item.model].filter(Boolean).join(' '),
     getBadge: (item) => item.type_aircraft || null,
   },
-  operators: {
-    icon: Building,
-    label: 'Operators',
-    getLink: (item) => `/operators/${item.cert_number || item.id}`,
-    getTitle: (item) => item.name || item.dba_name || 'Unknown',
-    getSubtitle: (item) => [item.city, item.state].filter(Boolean).join(', '),
-    getBadge: (item) => item.cert_type || null,
-  },
+  // operators hidden until real FAA certificate data is available
 };
 
 export default function SearchResults() {

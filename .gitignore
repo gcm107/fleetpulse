@@ -137,3 +137,29 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+.env
+*.db
+*.sqlite3
+/data/
+/tmp/
+.eggs/
+*.egg-info/
+dist/
+build/
+*.egg
+.mypy_cache/
+.pytest_cache/
+
+# FleetPulse
+fleetpulse.db
+node_modules/
+*.skill
+.claude/
+CLAUDE.md
+.DS_Store

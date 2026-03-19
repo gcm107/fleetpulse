@@ -1,0 +1,142 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    background-color: #09090b;
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-zinc-950 text-gray-100 font-sans;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    @apply transition-colors duration-150;
+  }
+
+  input, select, textarea {
+    @apply transition-all duration-150;
+  }
+}
+
+@layer components {
+  .data-cell {
+    @apply font-mono text-sm text-gray-200;
+  }
+
+  .card {
+    @apply bg-zinc-900 border border-zinc-800 rounded-lg p-4;
+  }
+
+  .card-header {
+    @apply text-xs font-semibold uppercase tracking-wider text-gray-400 mb-3;
+  }
+
+  .stat-value {
+    @apply font-mono text-2xl font-bold text-blue-400;
+  }
+
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium
+           text-gray-400 hover:text-gray-100 hover:bg-zinc-800
+           transition-all duration-200 cursor-pointer;
+  }
+
+  .nav-item.active {
+    @apply text-blue-400 bg-blue-500/10 border-l-2 border-blue-400;
+  }
+
+  .input-dark {
+    @apply bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2
+           text-gray-100 placeholder-gray-500
+           focus:outline-none focus:ring-2 focus:ring-blue-500/40 focus:border-blue-500
+           transition-all duration-200;
+  }
+
+  .btn-primary {
+    @apply bg-blue-600 hover:bg-blue-500 text-white font-medium
+           px-4 py-2 rounded-lg transition-all duration-200
+           focus:outline-none focus:ring-2 focus:ring-blue-500/40;
+  }
+
+  .btn-secondary {
+    @apply bg-zinc-800 hover:bg-zinc-700 text-gray-200 font-medium
+           px-4 py-2 rounded-lg border border-zinc-600
+           transition-all duration-200;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0c0c0e;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #3f3f46;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #52525b;
+}
+
+/* Firefox scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #3f3f46 #0c0c0e;
+}
+
+/* Leaflet map dark theme overrides */
+.leaflet-container {
+  background: #1c1c1e !important;
+}
+
+.leaflet-control-zoom a {
+  background-color: #27272a !important;
+  color: #9ca3af !important;
+  border-color: #3f3f46 !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #3f3f46 !important;
+  color: #e5e7eb !important;
+}
+
+/* Data table hover row */
+.data-row:hover {
+  background-color: rgba(59, 130, 246, 0.05);
+}
+
+/* Gauge animation */
+@keyframes gauge-fill {
+  from {
+    stroke-dashoffset: 283;
+  }
+}
+
+.gauge-arc {
+  animation: gauge-fill 1s ease-out forwards;
+}
+
+/* Pulse dot for status indicators */
+@keyframes status-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.status-dot {
+  animation: status-pulse 2s ease-in-out infinite;
+}

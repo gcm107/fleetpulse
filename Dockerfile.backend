@@ -1,0 +1,15 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+COPY backend/ ./backend/
+
+RUN mkdir -p /app/data
+
+# Initialize DB and seed airports on first run
+CMD ["sh", "-c", "\
+    python -c 'from backend.database import engine, Base; from backend.models import *; Base.metadata.create_all(bind=engine)' && \
+    uvicorn backend.main:app --host 0.0.0.0 --port 8000"]

@@ -278,9 +278,15 @@ export default function SettingsPage() {
               />
             ))}
           </div>
-          <p className="text-xs text-gray-600 mt-3">
-            API keys are configured via environment variables on the server.
-            Restart the backend after updating.
+          <p className="text-xs text-gray-500 mt-3 leading-relaxed">
+            These API keys are <span className="text-gray-400 font-medium">optional</span>. All core features (aircraft registry, airport data, safety scores, sanctions screening) work without them using pre-downloaded public data. Keys are only needed for enhanced real-time features:
+          </p>
+          <ul className="text-xs text-gray-600 mt-1.5 space-y-1 list-disc list-inside">
+            <li><span className="text-gray-400">OpenSky</span> increases live tracking API limits from 100 to 4,000 calls/day</li>
+            <li><span className="text-gray-400">FAA NOTAM</span> enables real-time Notices to Air Missions at airports</li>
+          </ul>
+          <p className="text-xxs text-gray-600 mt-2">
+            Configured via environment variables on the server.
           </p>
           <div className="mt-4 pt-4 border-t border-zinc-800/30">
             <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 block">

@@ -63,6 +63,10 @@ def on_startup():
 
 @app.get("/")
 def root():
+    # In production, serve the React frontend
+    _prod_static = Path(__file__).resolve().parent.parent / "static" / "index.html"
+    if _prod_static.is_file():
+        return FileResponse(str(_prod_static))
     return {
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,

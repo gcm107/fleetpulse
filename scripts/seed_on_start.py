@@ -4,6 +4,9 @@ import sqlite3
 import os
 import sys
 
+# Ensure the app root is on the Python path
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 logging.basicConfig(level=logging.INFO, format='%(asctime)s [%(levelname)s] %(message)s')
 logger = logging.getLogger("seed")
 

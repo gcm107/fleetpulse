@@ -250,11 +250,11 @@ export default function AircraftPage() {
                 <p className="font-mono text-lg font-bold text-gray-300">{aircraft.serial_number}</p>
               </div>
             )}
-            {(aircraft?.mode_s_hex || aircraft?.transponder_code) && (
+            {aircraft?.transponder_hex && (
               <div className="text-center">
                 <p className="text-xxs text-gray-500 uppercase tracking-wider mb-0.5">Mode S Hex</p>
                 <p className="font-mono text-lg font-bold text-blue-400">
-                  {aircraft.mode_s_hex || aircraft.transponder_code}
+                  {aircraft.transponder_hex}
                 </p>
               </div>
             )}
@@ -273,29 +273,28 @@ export default function AircraftPage() {
           <div className="space-y-3">
             <InfoField
               label="Aircraft Type"
-              value={aircraftTypeLabel(aircraft?.type_aircraft)}
+              value={aircraft?.aircraft_type}
               icon={PlaneTakeoff}
             />
             <InfoField
               label="Engine Type"
-              value={engineTypeLabel(aircraft?.type_engine)}
+              value={aircraft?.engine_type}
               icon={Cog}
             />
             <InfoField
+              label="Engine Model"
+              value={aircraft?.engine_model}
+              mono
+            />
+            <InfoField
               label="Number of Engines"
-              value={aircraft?.no_eng || aircraft?.number_of_engines}
+              value={aircraft?.engine_count}
               mono
             />
             <InfoField
               label="Number of Seats"
-              value={aircraft?.no_seats || aircraft?.number_of_seats}
+              value={aircraft?.number_of_seats}
               mono
-            />
-            <InfoField
-              label="Speed (MPH)"
-              value={aircraft?.speed}
-              mono
-              icon={Gauge}
             />
           </div>
         </div>
@@ -319,7 +318,7 @@ export default function AircraftPage() {
             />
             <InfoField
               label="Mode S Code (Hex)"
-              value={aircraft?.mode_s_hex || aircraft?.transponder_code}
+              value={aircraft?.transponder_hex}
               mono
             />
             <InfoField
@@ -330,13 +329,13 @@ export default function AircraftPage() {
             />
             <InfoField
               label="Airworthiness Date"
-              value={formatDate(aircraft?.air_worth_date)}
+              value={formatDate(aircraft?.airworthiness_date)}
               icon={Calendar}
               mono
             />
             <InfoField
               label="Airworthiness Class"
-              value={aircraft?.classification || aircraft?.airworthiness_class}
+              value={aircraft?.airworthiness_class}
             />
           </div>
         </div>
@@ -350,37 +349,33 @@ export default function AircraftPage() {
           <div className="space-y-3">
             <InfoField
               label="Name"
-              value={aircraft?.registrant_name || aircraft?.name}
+              value={aircraft?.registrant_name}
             />
             <InfoField
               label="Type"
-              value={registrantTypeLabel(aircraft?.type_registrant)}
+              value={aircraft?.registrant_type}
             />
             <InfoField
               label="Street"
-              value={aircraft?.street || aircraft?.registrant_street}
+              value={aircraft?.registrant_street}
             />
             <InfoField
               label="City"
-              value={aircraft?.city || aircraft?.registrant_city}
+              value={aircraft?.registrant_city}
               icon={MapPin}
             />
             <InfoField
               label="State"
-              value={aircraft?.state || aircraft?.registrant_state}
+              value={aircraft?.registrant_state}
             />
             <InfoField
               label="ZIP"
-              value={aircraft?.zip_code || aircraft?.registrant_zip}
+              value={aircraft?.registrant_zip}
               mono
             />
             <InfoField
-              label="Region"
-              value={aircraft?.region}
-            />
-            <InfoField
               label="Country"
-              value={aircraft?.country || 'US'}
+              value={aircraft?.registrant_country || aircraft?.country_code || 'US'}
             />
           </div>
         </div>

@@ -43,6 +43,7 @@ export const getOperatorEnforcement = (certNumber) => api.get(`/operators/${cert
 export const getSafetyComparison = (operatorIds) => api.get('/safety/compare', { params: { operators: operatorIds } });
 
 export const getLiveTracking = () => api.get('/tracking/live');
+export const lookupLiveAircraft = (nNumber) => api.get(`/tracking/lookup/${nNumber}`);
 export const addToWatchlist = (nNumber) => api.post('/tracking/watch', { n_number: nNumber });
 export const removeFromWatchlist = (nNumber) => api.delete(`/tracking/watch/${nNumber}`);
 export const getSanctionsAlerts = () => api.get('/sanctions/alerts');

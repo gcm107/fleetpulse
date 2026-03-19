@@ -127,6 +127,83 @@ def lookup_live_aircraft(n_number: str, db: Session = Depends(get_db)):
     }
 
 
+@router.get("/lookup/type")
+def lookup_live_by_type(
+    manufacturer: str = Query(..., min_length=1),
+    model: str = Query(""),
+    db: Session = Depends(get_db),
+):
+    """Look up all currently airborne aircraft of a given manufacturer/model.
+
+    Queries the aircraft registry for matching transponder hex codes, then
+    checks OpenSky for live positions. Limited to 200 hex codes per query.
+    """
+    stmt = select(Aircraft).where(
+        Aircraft.manufacturer == manufacturer.strip().upper(),
+        Aircraft.transponder_hex.isnot(None),
+        Aircraft.transponder_hex != "",
+        Aircraft.registration_status == "Valid",
+    )
+    if model.strip():
+        stmt = stmt.where(Aircraft.model == model.strip().upper())
+
+    stmt = stmt.limit(200)
+    aircraft_list = db.execute(stmt).scalars().all()
+
+    if not aircraft_list:
+        return {
+            "manufacturer": manufacturer,
+            "model": model or "All",
+            "aircraft_checked": 0,
+            "airborne": 0,
+            "positions": [],
+            "message": "No matching aircraft with transponder data found.",
+        }
+
+    hex_to_aircraft = {}
+    for ac in aircraft_list:
+        hex_to_aircraft[ac.transponder_hex.upper()] = {
+            "n_number": ac.n_number,
+            "manufacturer": ac.manufacturer,
+            "model": ac.model,
+            "year_mfr": ac.year_mfr,
+            "registrant_name": ac.registrant_name,
+        }
+
+    hex_codes = list(hex_to_aircraft.keys())
+
+    # Query OpenSky in batches of 50 hex codes (URL length limit)
+    all_positions = []
+    batch_size = 50
+    for i in range(0, len(hex_codes), batch_size):
+        batch = hex_codes[i:i + batch_size]
+        positions = _lookup_live_position(batch)
+        all_positions.extend(positions)
+
+    results = []
+    for pos in all_positions:
+        hex_upper = pos.get("transponder_hex", "").upper()
+        ac_info = hex_to_aircraft.get(hex_upper, {})
+        if pos.get("latitude") and pos.get("longitude"):
+            results.append({
+                **pos,
+                "n_number": ac_info.get("n_number"),
+                "manufacturer": ac_info.get("manufacturer"),
+                "model": ac_info.get("model"),
+                "year_mfr": ac_info.get("year_mfr"),
+                "registrant_name": ac_info.get("registrant_name"),
+            })
+
+    return {
+        "manufacturer": manufacturer,
+        "model": model or "All",
+        "aircraft_checked": len(hex_codes),
+        "airborne": len(results),
+        "positions": results,
+        "message": None if results else f"No {manufacturer} {model or ''} aircraft currently broadcasting ADS-B.",
+    }
+
+
 @router.get("/live/{hex_code}")
 def read_live_flight(hex_code: str, db: Session = Depends(get_db)):
     """Get a single aircraft's live position and recent track by transponder hex code."""

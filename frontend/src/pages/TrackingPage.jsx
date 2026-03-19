@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import { Map, Radar, PlaneTakeoff, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { lookupLiveAircraft } from '../api/client';
+import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+import { Map, Radar, PlaneTakeoff, AlertCircle, CheckCircle2, Filter, Search } from 'lucide-react';
+import { lookupLiveAircraft, lookupLiveByType, getManufacturers, getModels } from '../api/client';
 import FlightMap from '../components/tracking/FlightMap';
 import TrackingControls from '../components/tracking/TrackingControls';
 import Badge from '../components/common/Badge';
@@ -15,6 +15,59 @@ export default function TrackingPage() {
   const [loading, setLoading] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
   const intervalRef = useRef(null);
+
+  // Type search state
+  const [manufacturers, setManufacturersState] = useState([]);
+  const [mfgModels, setMfgModels] = useState([]);
+  const [selectedMfg, setSelectedMfg] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [mfgFilter, setMfgFilter] = useState('');
+  const [typeLoading, setTypeLoading] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
+  const [typeResult, setTypeResult] = useState(null);
+
+  // Load manufacturers on mount
+  useEffect(() => {
+    getManufacturers()
+      .then((res) => setManufacturersState(res.data.manufacturers || []))
+      .catch(() => {});
+  }, []);
+
+  // Load models when manufacturer changes
+  useEffect(() => {
+    if (!selectedMfg) { setMfgModels([]); setSelectedModel(''); return; }
+    setModelsLoading(true);
+    setSelectedModel('');
+    getModels(selectedMfg)
+      .then((res) => setMfgModels(res.data.models || []))
+      .catch(() => {})
+      .finally(() => setModelsLoading(false));
+  }, [selectedMfg]);
+
+  const filteredMfgs = useMemo(() => {
+    if (!mfgFilter.trim()) return manufacturers;
+    const lower = mfgFilter.toLowerCase();
+    return manufacturers.filter((m) => m.toLowerCase().includes(lower));
+  }, [manufacturers, mfgFilter]);
+
+  async function handleTypeSearch() {
+    if (!selectedMfg) return;
+    setTypeLoading(true);
+    setTypeResult(null);
+    try {
+      const res = await lookupLiveByType(selectedMfg, selectedModel || '');
+      const data = res.data;
+      setTypeResult(data);
+      if (data.positions && data.positions.length > 0) {
+        setPositions(data.positions);
+        setConnectionStatus('connected');
+      }
+    } catch (err) {
+      setTypeResult({ message: 'Lookup failed. OpenSky may be rate-limiting requests.' });
+    } finally {
+      setTypeLoading(false);
+    }
+  }
 
   const fetchAllWatchlist = useCallback(async () => {
     if (watchlist.length === 0) {
@@ -159,6 +212,73 @@ export default function TrackingPage() {
             onManualRefresh={fetchAllWatchlist}
             loading={loading}
           />
+
+          {/* Track by Type */}
+          <div className="card">
+            <div className="card-header flex items-center gap-2">
+              <Filter className="w-3.5 h-3.5" />
+              Track by Aircraft Type
+            </div>
+            <div className="space-y-3">
+              <div>
+                <label className="text-xxs font-semibold uppercase tracking-wider text-gray-500 mb-1 block">
+                  Manufacturer
+                </label>
+                <input
+                  type="text"
+                  value={mfgFilter}
+                  onChange={(e) => setMfgFilter(e.target.value)}
+                  placeholder="Filter..."
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-1.5 text-xs text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 mb-1"
+                />
+                <select
+                  value={selectedMfg}
+                  onChange={(e) => { setSelectedMfg(e.target.value); setMfgFilter(''); }}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50"
+                >
+                  <option value="">Select Manufacturer</option>
+                  {filteredMfgs.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="text-xxs font-semibold uppercase tracking-wider text-gray-500 mb-1 block">
+                  Model
+                </label>
+                <select
+                  value={selectedModel}
+                  onChange={(e) => setSelectedModel(e.target.value)}
+                  disabled={!selectedMfg || modelsLoading}
+                  className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50 disabled:opacity-40"
+                >
+                  <option value="">{modelsLoading ? 'Loading...' : !selectedMfg ? 'Select manufacturer first' : 'All Models'}</option>
+                  {mfgModels.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleTypeSearch}
+                disabled={!selectedMfg || typeLoading}
+                className="w-full px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {typeLoading ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Search className="w-4 h-4" />
+                )}
+                {typeLoading ? 'Scanning...' : 'Find Airborne Aircraft'}
+              </button>
+              {typeResult && (
+                <div className={`text-xs rounded-lg p-2 ${typeResult.airborne > 0 ? 'bg-green-500/10 text-green-400' : 'bg-zinc-800/50 text-gray-500'}`}>
+                  {typeResult.airborne > 0
+                    ? `Found ${typeResult.airborne} airborne out of ${typeResult.aircraft_checked} checked`
+                    : typeResult.message || 'No aircraft currently airborne'}
+                </div>
+              )}
+            </div>
+          </div>
 
           {/* Live results */}
           {Object.keys(lookupResults).length > 0 && (

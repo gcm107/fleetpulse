@@ -48,6 +48,7 @@ export const getSafetyComparison = (operatorIds) => api.get('/safety/compare', {
 
 export const getLiveTracking = () => api.get('/tracking/live');
 export const lookupLiveAircraft = (nNumber) => api.get(`/tracking/lookup/${nNumber}`);
+export const lookupLiveByType = (manufacturer, model) => api.get('/tracking/lookup/type', { params: { manufacturer, model } });
 export const addToWatchlist = (nNumber) => api.post('/tracking/watch', { n_number: nNumber });
 export const removeFromWatchlist = (nNumber) => api.delete(`/tracking/watch/${nNumber}`);
 export const getSanctionsAlerts = () => api.get('/sanctions/alerts');

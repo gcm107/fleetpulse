@@ -18,6 +18,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend
 COPY backend/ ./backend/
 
+# Copy seed script
+COPY scripts/seed_on_start.py ./scripts/
+
 # Copy built frontend
 COPY --from=frontend-build /app/frontend/dist ./static/
 
@@ -28,4 +31,4 @@ ENV DATABASE_URL=sqlite:////app/data/fleetpulse.db
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python -c 'from backend.database import engine, Base; from backend.models import *; Base.metadata.create_all(bind=engine)' && uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+CMD ["sh", "-c", "python scripts/seed_on_start.py && uvicorn backend.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

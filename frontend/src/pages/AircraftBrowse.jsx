@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PlaneTakeoff, Search, ArrowRight } from 'lucide-react';
-import { searchAll } from '../api/client';
+import { PlaneTakeoff, Search, ChevronDown, Filter } from 'lucide-react';
+import { searchAll, getManufacturers, getModels, searchByType } from '../api/client';
 import DataTable from '../components/common/DataTable';
 import Badge from '../components/common/Badge';
 
@@ -11,6 +11,57 @@ export default function AircraftBrowse() {
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(false);
   const [searched, setSearched] = useState(false);
+
+  // Type search state
+  const [manufacturers, setManufacturers] = useState([]);
+  const [models, setModelsState] = useState([]);
+  const [selectedManufacturer, setSelectedManufacturer] = useState('');
+  const [selectedModel, setSelectedModel] = useState('');
+  const [manufacturerFilter, setManufacturerFilter] = useState('');
+  const [typeLoading, setTypeLoading] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
+
+  // Load manufacturers on mount
+  useEffect(() => {
+    async function fetchManufacturers() {
+      try {
+        const res = await getManufacturers();
+        setManufacturers(res.data.manufacturers || []);
+      } catch (err) {
+        console.error('Failed to load manufacturers:', err);
+      }
+    }
+    fetchManufacturers();
+  }, []);
+
+  // Load models when manufacturer changes
+  useEffect(() => {
+    if (!selectedManufacturer) {
+      setModelsState([]);
+      setSelectedModel('');
+      return;
+    }
+    async function fetchModels() {
+      setModelsLoading(true);
+      setSelectedModel('');
+      try {
+        const res = await getModels(selectedManufacturer);
+        setModelsState(res.data.models || []);
+      } catch (err) {
+        console.error('Failed to load models:', err);
+      } finally {
+        setModelsLoading(false);
+      }
+    }
+    fetchModels();
+  }, [selectedManufacturer]);
+
+  // Filter manufacturers based on text input
+  const filteredManufacturers = useMemo(() => {
+    if (!manufacturerFilter.trim()) return manufacturers;
+    const lower = manufacturerFilter.toLowerCase();
+    return manufacturers.filter((m) => m.toLowerCase().includes(lower));
+  }, [manufacturers, manufacturerFilter]);
 
   async function handleSearch(e) {
     e.preventDefault();
@@ -26,6 +77,26 @@ export default function AircraftBrowse() {
       setLoading(false);
     }
   }
+
+  async function handleTypeSearch() {
+    if (!selectedManufacturer) return;
+    setTypeLoading(true);
+    setSearched(true);
+    try {
+      const res = await searchByType(
+        selectedManufacturer,
+        selectedModel || undefined,
+        50
+      );
+      setResults(res.data || []);
+    } catch (err) {
+      console.error('Type search failed:', err);
+    } finally {
+      setTypeLoading(false);
+    }
+  }
+
+  const isLoading = loading || typeLoading;
 
   const columns = [
     {
@@ -73,7 +144,7 @@ export default function AircraftBrowse() {
         </div>
         <button
           type="submit"
-          disabled={!query.trim() || loading}
+          disabled={!query.trim() || isLoading}
           className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
         >
           <Search className="w-4 h-4" />
@@ -81,13 +152,91 @@ export default function AircraftBrowse() {
         </button>
       </form>
 
-      {loading ? (
+      {/* Browse by Aircraft Type */}
+      <div className="card">
+        <div className="card-header flex items-center gap-2">
+          <Filter className="w-3.5 h-3.5" />
+          Browse by Aircraft Type
+        </div>
+        <div className="p-4 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Manufacturer dropdown with filter */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Manufacturer
+              </label>
+              <input
+                type="text"
+                value={manufacturerFilter}
+                onChange={(e) => setManufacturerFilter(e.target.value)}
+                placeholder="Filter manufacturers..."
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50"
+              />
+              <select
+                value={selectedManufacturer}
+                onChange={(e) => {
+                  setSelectedManufacturer(e.target.value);
+                  setManufacturerFilter('');
+                }}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50 appearance-none cursor-pointer"
+                size={1}
+              >
+                <option value="">Select Manufacturer</option>
+                {filteredManufacturers.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Model dropdown */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                Model
+              </label>
+              <div className="h-[38px]" /> {/* spacer to align with manufacturer filter input */}
+              <select
+                value={selectedModel}
+                onChange={(e) => setSelectedModel(e.target.value)}
+                disabled={!selectedManufacturer || modelsLoading}
+                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-gray-200 focus:outline-none focus:border-blue-500/50 appearance-none cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              >
+                <option value="">
+                  {modelsLoading
+                    ? 'Loading models...'
+                    : !selectedManufacturer
+                    ? 'Select a manufacturer first'
+                    : 'All Models'}
+                </option>
+                {models.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleTypeSearch}
+            disabled={!selectedManufacturer || isLoading}
+            className="px-5 py-2.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <Search className="w-4 h-4" />
+            Search
+          </button>
+        </div>
+      </div>
+
+      {isLoading ? (
         <div className="text-center py-12">
           <div className="inline-block w-5 h-5 border-2 border-gray-600 border-t-blue-400 rounded-full animate-spin" />
         </div>
       ) : searched && results.length === 0 ? (
         <div className="card text-center py-12">
-          <p className="text-gray-500">No aircraft found matching "{query}"</p>
+          <p className="text-gray-500">No aircraft found</p>
         </div>
       ) : results.length > 0 ? (
         <div className="card">

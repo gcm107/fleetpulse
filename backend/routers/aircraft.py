@@ -1,9 +1,11 @@
 """FastAPI router for aircraft-related endpoints."""
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from backend.database import get_db
+from backend.models.aircraft import Aircraft
 from backend.schemas.aircraft import AircraftDetail, OwnershipEntry, TailHistoryEntry
 from backend.schemas.safety import NTSBAccidentResponse, SafetyScoreResponse
 from backend.schemas.sanctions import SanctionsCheckResponse
@@ -17,6 +19,67 @@ from backend.services.sanctions_service import check_aircraft_sanctions
 from backend.services.tracking_service import get_aircraft_track
 
 router = APIRouter(prefix="/api/aircraft", tags=["aircraft"])
+
+
+@router.get("/types/manufacturers")
+def list_manufacturers(db: Session = Depends(get_db)):
+    """Return distinct manufacturers with 10+ aircraft, ordered alphabetically."""
+    stmt = (
+        select(Aircraft.manufacturer)
+        .where(Aircraft.manufacturer.isnot(None))
+        .where(Aircraft.manufacturer != "")
+        .group_by(Aircraft.manufacturer)
+        .having(func.count(Aircraft.id) >= 10)
+        .order_by(Aircraft.manufacturer)
+    )
+    rows = db.execute(stmt).scalars().all()
+    return {"manufacturers": list(rows)}
+
+
+@router.get("/types/models")
+def list_models(
+    manufacturer: str = Query(..., description="Manufacturer name"),
+    db: Session = Depends(get_db),
+):
+    """Return distinct models for a given manufacturer, ordered alphabetically."""
+    stmt = (
+        select(Aircraft.model)
+        .where(Aircraft.manufacturer == manufacturer)
+        .where(Aircraft.model.isnot(None))
+        .where(Aircraft.model != "")
+        .distinct()
+        .order_by(Aircraft.model)
+    )
+    rows = db.execute(stmt).scalars().all()
+    return {"models": list(rows)}
+
+
+@router.get("/types/search")
+def search_by_type(
+    manufacturer: str = Query(..., description="Manufacturer name"),
+    model: str = Query(None, description="Model name (optional)"),
+    limit: int = Query(50, ge=1, le=200, description="Max results"),
+    db: Session = Depends(get_db),
+):
+    """Search aircraft by manufacturer and optionally model."""
+    stmt = select(Aircraft).where(Aircraft.manufacturer == manufacturer)
+    if model:
+        stmt = stmt.where(Aircraft.model == model)
+    stmt = stmt.order_by(Aircraft.n_number).limit(limit)
+    results = db.execute(stmt).scalars().all()
+    return [
+        {
+            "n_number": a.n_number,
+            "manufacturer": a.manufacturer,
+            "model": a.model,
+            "year_mfr": a.year_mfr,
+            "registrant_name": a.registrant_name,
+            "registration_status": a.registration_status,
+            "serial_number": a.serial_number,
+            "icao_type_designator": a.icao_type_designator,
+        }
+        for a in results
+    ]
 
 
 @router.get("/{n_number}", response_model=AircraftDetail)

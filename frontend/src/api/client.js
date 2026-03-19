@@ -29,6 +29,10 @@ export const getAirportRunways = (code) => api.get(`/airports/${code}/runways`);
 export const getStats = () => api.get('/stats');
 export const getEtlStatus = () => api.get('/etl/status');
 
+export const getManufacturers = () => api.get('/aircraft/types/manufacturers');
+export const getModels = (manufacturer) => api.get('/aircraft/types/models', { params: { manufacturer } });
+export const searchByType = (manufacturer, model, limit) => api.get('/aircraft/types/search', { params: { manufacturer, model, limit } });
+
 export const getAircraft = (nNumber) => api.get(`/aircraft/${nNumber}`);
 export const getAircraftHistory = (nNumber) => api.get(`/aircraft/${nNumber}/history`);
 export const getAircraftOwnership = (nNumber) => api.get(`/aircraft/${nNumber}/ownership`);

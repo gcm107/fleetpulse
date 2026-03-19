@@ -25,6 +25,7 @@ import {
 } from '../utils/formatters';
 import { AIRPORT_TYPES } from '../utils/constants';
 import AirportWeather from '../components/airport/AirportWeather';
+import AirportMap from '../components/airport/AirportMap';
 
 function InfoField({ label, value, mono = false, icon: Icon }) {
   return (
@@ -207,6 +208,16 @@ export default function AirportPage() {
           </div>
         </div>
       </div>
+
+      {/* Airport Map */}
+      {airport?.latitude_deg != null && airport?.longitude_deg != null && (
+        <AirportMap
+          latitude={airport.latitude_deg}
+          longitude={airport.longitude_deg}
+          name={airport.name}
+          icao_code={airport.icao_code}
+        />
+      )}
 
       {/* Details grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">

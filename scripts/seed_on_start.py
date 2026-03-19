@@ -41,7 +41,7 @@ def main():
     # Step 1: Create all tables
     logger.info("Initializing database tables...")
     from backend.database import engine, Base
-    from backend.models import *  # noqa: F401,F403
+    import backend.models  # noqa: F401
     Base.metadata.create_all(bind=engine)
     logger.info("Tables ready.")
 

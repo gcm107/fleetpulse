@@ -1,6 +1,6 @@
 # FleetPulse
 
-**Private aviation intelligence platform** built entirely on free, open-source data. Look up any of 310,000+ FAA-registered aircraft, screen against OFAC sanctions, compute safety scores, track flights, and research operators -- all in one professional-grade tool.
+**Private aviation intelligence platform** built entirely on free, open-source data. Look up any of 310,000+ FAA-registered aircraft, screen against OFAC sanctions, compute safety scores, and track flights -- all in one professional-grade tool.
 
 ![Tech Stack](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=fastapi&logoColor=white)
 ![React](https://img.shields.io/badge/React_18-61DAFB?style=flat&logo=react&logoColor=black)
@@ -24,10 +24,9 @@
 | **Airport Intelligence** | ICAO/IATA lookup with runways, frequencies, live METAR/TAF weather | 84,000+ airports |
 | **Safety Scoring** | Derived 0-100 scores using NTSB accidents, enforcement actions, fleet age, AD exposure | 305,000+ scored |
 | **Sanctions Screening** | OFAC SDN cross-reference with confidence scoring and alert dashboard | Automated matching |
-| **Operator Due Diligence** | Part 135/121 certificate verification, fleet composition, enforcement history | Certificate lookup |
 | **Flight Tracking** | Real-time positions via OpenSky ADS-B, dark map with aircraft markers | Live tracking |
 | **Tail Number History** | Registration timeline showing re-registrations, deregistrations, exports | 382,000+ events |
-| **Unified Search** | Single search bar across all aircraft, airports, and operators | Instant results |
+| **Unified Search** | Single search bar across aircraft and airports | Instant results |
 
 ## Tech Stack
 

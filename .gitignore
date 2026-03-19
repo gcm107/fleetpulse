@@ -158,6 +158,8 @@ build/
 
 # FleetPulse
 fleetpulse.db
+fleetpulse.db-shm
+fleetpulse.db-wal
 node_modules/
 *.skill
 .claude/

@@ -322,21 +322,6 @@ export default function SettingsPage() {
               Get free credentials at <a href="https://opensky-network.org/index.php/login" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">opensky-network.org</a>. Stored in your browser only.
             </p>
           </div>
-          <div className="mt-4 pt-4 border-t border-zinc-800/30">
-            <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 block">
-              Admin API Key (for ETL triggers)
-            </label>
-            <input
-              type="password"
-              value={adminKey}
-              onChange={(e) => setAdminKey(e.target.value)}
-              placeholder="Enter admin key (leave blank if not configured)"
-              className="w-full bg-zinc-900/50 border border-zinc-700/30 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono"
-            />
-            <p className="text-xxs text-gray-600 mt-1">
-              Set ADMIN_API_KEY in .env to require authentication for ETL triggers.
-            </p>
-          </div>
         </div>
 
         {/* System Info */}
@@ -403,46 +388,41 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      {/* Data Management */}
+      {/* Data Info */}
       <div className="card">
         <div className="card-header flex items-center gap-2">
           <RefreshCw className="w-3.5 h-3.5" />
-          Data Management -- ETL Jobs
+          Data Sources
         </div>
-        <p className="text-xs text-gray-500 mb-4">
-          Trigger data ingestion jobs manually. Each module pulls data from its
-          source, transforms it, and loads it into the database.
+        <p className="text-xs text-gray-500">
+          FleetPulse ingests data from free, public aviation sources. Data is loaded automatically on server startup.
         </p>
-        <div>
-          {ETL_MODULES.map((mod) => (
-            <EtlModuleRow
-              key={mod.key}
-              module={mod}
-              lastRun={getModuleLastRun(mod.key)}
-              onTrigger={handleTrigger}
-              triggering={triggering}
-            />
-          ))}
-        </div>
-      </div>
-
-      {/* Recent ETL Runs */}
-      <div className="card">
-        <div className="card-header flex items-center gap-2">
-          <Clock className="w-3.5 h-3.5" />
-          Recent ETL Runs
-        </div>
-        {etlStatus?.recent_runs && etlStatus.recent_runs.length > 0 ? (
-          <DataTable
-            columns={etlColumns}
-            data={etlStatus.recent_runs}
-            emptyMessage="No ETL runs recorded"
-          />
-        ) : (
-          <div className="text-sm text-gray-500 text-center py-6">
-            No ETL runs recorded. Trigger a job above to get started.
+        <div className="mt-3 space-y-2 text-xs">
+          <div className="flex justify-between py-1.5 border-b border-zinc-800/30">
+            <span className="text-gray-400">FAA Aircraft Registry</span>
+            <span className="text-gray-500">310,000+ aircraft, updated daily</span>
           </div>
-        )}
+          <div className="flex justify-between py-1.5 border-b border-zinc-800/30">
+            <span className="text-gray-400">OurAirports</span>
+            <span className="text-gray-500">84,000+ airports worldwide</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-zinc-800/30">
+            <span className="text-gray-400">NTSB</span>
+            <span className="text-gray-500">Aviation accident database</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-zinc-800/30">
+            <span className="text-gray-400">OFAC SDN</span>
+            <span className="text-gray-500">US Treasury sanctions list</span>
+          </div>
+          <div className="flex justify-between py-1.5 border-b border-zinc-800/30">
+            <span className="text-gray-400">OpenSky Network</span>
+            <span className="text-gray-500">Real-time ADS-B flight tracking</span>
+          </div>
+          <div className="flex justify-between py-1.5">
+            <span className="text-gray-400">NOAA Aviation Weather</span>
+            <span className="text-gray-500">METAR/TAF observations</span>
+          </div>
+        </div>
       </div>
     </div>
   );

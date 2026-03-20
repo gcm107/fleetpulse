@@ -29,7 +29,11 @@ def read_airport(code: str, db: Session = Depends(get_db)):
 
 @router.get("/{code}/weather")
 def read_airport_weather(code: str, db: Session = Depends(get_db)):
-    """Get the latest METAR and TAF for an airport."""
+    """Get the latest METAR and TAF for an airport.
+
+    Checks the database first. If no weather data exists, fetches live
+    from NOAA Aviation Weather Center.
+    """
     airport = get_airport_by_code(db, code)
     if airport is None:
         raise HTTPException(
@@ -37,7 +41,47 @@ def read_airport_weather(code: str, db: Session = Depends(get_db)):
             detail=f"Airport not found for code: {code}",
         )
 
-    weather = get_airport_weather(db, airport.icao_code)
+    icao = airport.icao_code
+    weather = get_airport_weather(db, icao)
+
+    # If no data in DB, fetch live from NOAA
+    if weather["metar"] is None and weather["taf"] is None:
+        try:
+            from backend.etl.weather import fetch_metar, fetch_taf
+            live_metars = fetch_metar([icao])
+            live_tafs = fetch_taf([icao])
+
+            metar_data = None
+            if live_metars:
+                m = live_metars[0]
+                metar_data = {
+                    "station_id": m.get("icaoId", icao),
+                    "raw_text": m.get("rawOb"),
+                    "temperature_c": m.get("temp"),
+                    "dewpoint_c": m.get("dewp"),
+                    "wind_direction_deg": m.get("wdir"),
+                    "wind_speed_kts": m.get("wspd"),
+                    "wind_gust_kts": m.get("wgst"),
+                    "visibility_sm": m.get("visib"),
+                    "altimeter_inhg": m.get("altim"),
+                    "flight_category": m.get("fltcat"),
+                    "observation_time": str(m.get("reportTime", "")),
+                }
+
+            taf_data = None
+            if live_tafs:
+                t = live_tafs[0]
+                taf_data = {
+                    "station_id": t.get("icaoId", icao),
+                    "raw_text": t.get("rawTAF") or t.get("rawOb"),
+                    "issue_time": str(t.get("issueTime", "")),
+                    "valid_from": str(t.get("validTimeFrom", "")),
+                    "valid_to": str(t.get("validTimeTo", "")),
+                }
+
+            return {"metar": metar_data, "taf": taf_data}
+        except Exception:
+            return {"metar": None, "taf": None}
 
     metar_data = None
     if weather["metar"] is not None:

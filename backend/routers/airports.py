@@ -51,9 +51,15 @@ def read_airport_weather(code: str, db: Session = Depends(get_db)):
             live_metars = fetch_metar([icao])
             live_tafs = fetch_taf([icao])
 
+            from datetime import datetime, timezone
+
             metar_data = None
             if live_metars:
                 m = live_metars[0]
+                # Convert altim from mb to inHg if > 100 (NOAA returns mb)
+                altim = m.get("altim")
+                if altim and altim > 100:
+                    altim = round(altim * 0.02953, 2)
                 metar_data = {
                     "station_id": m.get("icaoId", icao),
                     "raw_text": m.get("rawOb"),
@@ -62,21 +68,43 @@ def read_airport_weather(code: str, db: Session = Depends(get_db)):
                     "wind_direction_deg": m.get("wdir"),
                     "wind_speed_kts": m.get("wspd"),
                     "wind_gust_kts": m.get("wgst"),
-                    "visibility_sm": m.get("visib"),
-                    "altimeter_inhg": m.get("altim"),
-                    "flight_category": m.get("fltcat"),
+                    "visibility_sm": str(m.get("visib", "")),
+                    "altimeter_inhg": altim,
+                    "flight_category": m.get("fltCat") or m.get("fltcat"),
+                    "ceiling_ft": None,
                     "observation_time": str(m.get("reportTime", "")),
                 }
+                # Extract ceiling from clouds
+                clouds = m.get("clouds")
+                if clouds and isinstance(clouds, list):
+                    for layer in clouds:
+                        cover = (layer.get("cover") or "").upper()
+                        if cover in ("BKN", "OVC", "VV"):
+                            base = layer.get("base")
+                            if base is not None:
+                                metar_data["ceiling_ft"] = base
+                                break
 
             taf_data = None
             if live_tafs:
                 t = live_tafs[0]
+                # Format valid times from epoch or ISO
+                def fmt_time(val):
+                    if not val:
+                        return None
+                    try:
+                        if isinstance(val, (int, float)):
+                            return datetime.fromtimestamp(val, tz=timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+                        return str(val).replace("T", " ").replace("Z", " UTC")[:20]
+                    except Exception:
+                        return str(val)
+
                 taf_data = {
                     "station_id": t.get("icaoId", icao),
                     "raw_text": t.get("rawTAF") or t.get("rawOb"),
-                    "issue_time": str(t.get("issueTime", "")),
-                    "valid_from": str(t.get("validTimeFrom", "")),
-                    "valid_to": str(t.get("validTimeTo", "")),
+                    "issue_time": fmt_time(t.get("issueTime")),
+                    "valid_from": fmt_time(t.get("validTimeFrom")),
+                    "valid_to": fmt_time(t.get("validTimeTo")),
                 }
 
             return {"metar": metar_data, "taf": taf_data}

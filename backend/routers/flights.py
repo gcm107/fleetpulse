@@ -223,6 +223,74 @@ def lookup_live_by_type(
     }
 
 
+@router.get("/lookup/callsign")
+def lookup_live_by_callsign(
+    callsign: str = Query(..., min_length=1, max_length=10),
+    x_opensky_client_id: str | None = Header(None),
+    x_opensky_client_secret: str | None = Header(None),
+):
+    """Look up all currently airborne aircraft matching a callsign prefix.
+
+    Fetches all current state vectors from OpenSky and filters by callsign
+    prefix (e.g. "KOW" matches KOW123, KOW456, etc.). Since OpenSky doesn't
+    support server-side callsign filtering, this fetches all states and filters
+    client-side. Requires authenticated access for reliable results.
+    """
+    prefix = callsign.strip().upper()
+
+    token = None
+    client_id = x_opensky_client_id or settings.OPENSKY_CLIENT_ID
+    client_secret = x_opensky_client_secret or settings.OPENSKY_CLIENT_SECRET
+    if client_id and client_secret:
+        try:
+            token = get_opensky_token(client_id, client_secret)
+        except Exception as e:
+            logger.warning(f"OpenSky auth failed: {e}")
+
+    try:
+        states = fetch_live_states(token=token)
+    except Exception as e:
+        logger.error(f"OpenSky fetch failed: {e}")
+        return {
+            "callsign_prefix": prefix,
+            "aircraft_found": 0,
+            "positions": [],
+            "message": "Failed to fetch data from OpenSky. You may be rate-limited.",
+        }
+
+    results = []
+    for sv in states:
+        if len(sv) < 17:
+            continue
+        cs = (sv[1] or "").strip().upper()
+        if not cs.startswith(prefix):
+            continue
+        if sv[6] is None or sv[5] is None:
+            continue
+
+        results.append({
+            "transponder_hex": (sv[0] or "").upper(),
+            "callsign": cs,
+            "origin_country": sv[2],
+            "latitude": sv[6],
+            "longitude": sv[5],
+            "altitude_ft": round(sv[7] * 3.28084) if sv[7] is not None else None,
+            "geo_altitude_ft": round(sv[13] * 3.28084) if sv[13] is not None else None,
+            "ground_speed_kts": round(sv[9] * 1.94384) if sv[9] is not None else None,
+            "track_deg": sv[10],
+            "vertical_rate_fpm": round(sv[11] * 196.85) if sv[11] is not None else None,
+            "on_ground": sv[8],
+            "squawk": sv[14],
+        })
+
+    return {
+        "callsign_prefix": prefix,
+        "aircraft_found": len(results),
+        "positions": results,
+        "message": None if results else f"No aircraft with callsign prefix '{prefix}' currently airborne.",
+    }
+
+
 @router.get("/live/{hex_code}")
 def read_live_flight(hex_code: str, db: Session = Depends(get_db)):
     """Get a single aircraft's live position and recent track by transponder hex code."""

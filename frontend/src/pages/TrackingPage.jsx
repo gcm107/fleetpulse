@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { Map, Radar, PlaneTakeoff, AlertCircle, CheckCircle2, Filter, Search, Settings, Key } from 'lucide-react';
-import { lookupLiveAircraft, lookupLiveByType, getManufacturers, getModels } from '../api/client';
+import { Map, Radar, Radio, PlaneTakeoff, AlertCircle, CheckCircle2, Filter, Search, Settings, Key } from 'lucide-react';
+import { lookupLiveAircraft, lookupLiveByType, lookupLiveByCallsign, getManufacturers, getModels } from '../api/client';
 import FlightMap from '../components/tracking/FlightMap';
 import TrackingControls from '../components/tracking/TrackingControls';
 import Badge from '../components/common/Badge';
@@ -26,6 +26,11 @@ export default function TrackingPage() {
   const [typeLoading, setTypeLoading] = useState(false);
   const [modelsLoading, setModelsLoading] = useState(false);
   const [typeResult, setTypeResult] = useState(null);
+
+  // Callsign search state
+  const [callsignInput, setCallsignInput] = useState('');
+  const [callsignLoading, setCallsignLoading] = useState(false);
+  const [callsignResult, setCallsignResult] = useState(null);
 
   // Load manufacturers on mount
   useEffect(() => {
@@ -73,6 +78,33 @@ export default function TrackingPage() {
       });
     } finally {
       setTypeLoading(false);
+    }
+  }
+
+  async function handleCallsignSearch(e) {
+    if (e) e.preventDefault();
+    const prefix = callsignInput.trim().toUpperCase();
+    if (!prefix) return;
+    setCallsignLoading(true);
+    setCallsignResult(null);
+    try {
+      const res = await lookupLiveByCallsign(prefix);
+      const data = res.data;
+      setCallsignResult(data);
+      if (data.positions && data.positions.length > 0) {
+        setPositions(data.positions);
+        setConnectionStatus('connected');
+      }
+    } catch (err) {
+      const hasKeys = localStorage.getItem('opensky_client_id') && localStorage.getItem('opensky_client_secret');
+      setCallsignResult({
+        rate_limited: true,
+        message: hasKeys
+          ? 'Lookup failed. OpenSky may be temporarily unavailable.'
+          : 'Lookup failed due to rate limits. Add OpenSky credentials in Settings.',
+      });
+    } finally {
+      setCallsignLoading(false);
     }
   }
 
@@ -304,6 +336,67 @@ export default function TrackingPage() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Track by Callsign */}
+          <div className="card">
+            <div className="card-header flex items-center gap-2">
+              <Radio className="w-3.5 h-3.5" />
+              Track by Callsign
+            </div>
+            <form onSubmit={handleCallsignSearch} className="space-y-3">
+              <div>
+                <label className="text-xxs font-semibold uppercase tracking-wider text-gray-500 mb-1 block">
+                  Callsign / Telephony Prefix
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={callsignInput}
+                    onChange={(e) => setCallsignInput(e.target.value.toUpperCase())}
+                    placeholder="e.g. UAL, DAL, AAL"
+                    maxLength={10}
+                    className="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono"
+                  />
+                  <button
+                    type="submit"
+                    disabled={!callsignInput.trim() || callsignLoading}
+                    className="px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white text-sm transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    {callsignLoading ? (
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    ) : (
+                      <Search className="w-4 h-4" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-xxs text-gray-600 mt-1">
+                  ICAO airline designator or ATC callsign prefix
+                </p>
+              </div>
+              {callsignResult && (
+                <div className={`text-xs rounded-lg p-2.5 ${
+                  callsignResult.aircraft_found > 0
+                    ? 'bg-green-500/10 text-green-400'
+                    : callsignResult.rate_limited
+                    ? 'bg-orange-500/10 text-orange-400'
+                    : 'bg-zinc-800/50 text-gray-500'
+                }`}>
+                  {callsignResult.aircraft_found > 0
+                    ? `Found ${callsignResult.aircraft_found} aircraft with callsign prefix "${callsignResult.callsign_prefix}"`
+                    : callsignResult.message || 'No aircraft found with that callsign prefix'}
+                  {callsignResult.rate_limited && !localStorage.getItem('opensky_client_id') && (
+                    <Link
+                      to="/settings"
+                      className="flex items-center gap-1.5 mt-2 text-blue-400 hover:text-blue-300 font-medium"
+                    >
+                      <Key className="w-3 h-3" />
+                      Configure OpenSky credentials
+                    </Link>
+                  )}
+                </div>
+              )}
+            </form>
           </div>
 
           {/* Live results */}

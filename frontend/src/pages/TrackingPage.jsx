@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback, useMemo } from 'react';
-import { Map, Radar, PlaneTakeoff, AlertCircle, CheckCircle2, Filter, Search } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Map, Radar, PlaneTakeoff, AlertCircle, CheckCircle2, Filter, Search, Settings, Key } from 'lucide-react';
 import { lookupLiveAircraft, lookupLiveByType, getManufacturers, getModels } from '../api/client';
 import FlightMap from '../components/tracking/FlightMap';
 import TrackingControls from '../components/tracking/TrackingControls';
@@ -63,7 +64,13 @@ export default function TrackingPage() {
         setConnectionStatus('connected');
       }
     } catch (err) {
-      setTypeResult({ message: 'Lookup failed. OpenSky may be rate-limiting requests.' });
+      const hasKeys = localStorage.getItem('opensky_client_id') && localStorage.getItem('opensky_client_secret');
+      setTypeResult({
+        rate_limited: true,
+        message: hasKeys
+          ? 'Lookup failed. OpenSky may be temporarily unavailable. Try again in a moment.'
+          : 'Lookup failed due to OpenSky rate limits. Add your free OpenSky API credentials on the Settings page to increase your limit from 100 to 4,000 calls/day.',
+      });
     } finally {
       setTypeLoading(false);
     }
@@ -97,9 +104,13 @@ export default function TrackingPage() {
             });
           }
         } else {
+          const hasKeys = localStorage.getItem('opensky_client_id') && localStorage.getItem('opensky_client_secret');
+          const errMsg = result.reason?.response?.data?.detail || 'Lookup failed';
           newResults[nNum] = {
             status: 'error',
-            message: result.reason?.response?.data?.detail || 'Lookup failed',
+            message: errMsg.includes('rate') || result.reason?.response?.status === 429 || result.reason?.response?.status === 500
+              ? (hasKeys ? errMsg : 'Rate limited. Configure OpenSky credentials in Settings for 4,000 calls/day.')
+              : errMsg,
           };
         }
       });
@@ -271,10 +282,25 @@ export default function TrackingPage() {
                 {typeLoading ? 'Scanning...' : 'Find Airborne Aircraft'}
               </button>
               {typeResult && (
-                <div className={`text-xs rounded-lg p-2 ${typeResult.airborne > 0 ? 'bg-green-500/10 text-green-400' : 'bg-zinc-800/50 text-gray-500'}`}>
+                <div className={`text-xs rounded-lg p-2.5 ${
+                  typeResult.airborne > 0
+                    ? 'bg-green-500/10 text-green-400'
+                    : typeResult.rate_limited
+                    ? 'bg-orange-500/10 text-orange-400'
+                    : 'bg-zinc-800/50 text-gray-500'
+                }`}>
                   {typeResult.airborne > 0
                     ? `Found ${typeResult.airborne} airborne out of ${typeResult.aircraft_checked} checked`
                     : typeResult.message || 'No aircraft currently airborne'}
+                  {typeResult.rate_limited && !localStorage.getItem('opensky_client_id') && (
+                    <Link
+                      to="/settings"
+                      className="flex items-center gap-1.5 mt-2 text-blue-400 hover:text-blue-300 font-medium"
+                    >
+                      <Key className="w-3 h-3" />
+                      Configure OpenSky credentials
+                    </Link>
+                  )}
                 </div>
               )}
             </div>

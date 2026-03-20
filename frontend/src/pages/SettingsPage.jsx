@@ -124,6 +124,8 @@ export default function SettingsPage() {
   const [triggering, setTriggering] = useState(null);
   const [triggerResult, setTriggerResult] = useState(null);
   const [adminKey, setAdminKey] = useState('');
+  const [openskyClientId, setOpenskyClientId] = useState(() => localStorage.getItem('opensky_client_id') || '');
+  const [openskyClientSecret, setOpenskyClientSecret] = useState(() => localStorage.getItem('opensky_client_secret') || '');
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -285,9 +287,41 @@ export default function SettingsPage() {
             <li><span className="text-gray-400">OpenSky</span> increases live tracking API limits from 100 to 4,000 calls/day</li>
             <li><span className="text-gray-400">FAA NOTAM</span> enables real-time Notices to Air Missions at airports</li>
           </ul>
-          <p className="text-xxs text-gray-600 mt-2">
-            Configured via environment variables on the server.
-          </p>
+          <div className="mt-4 pt-4 border-t border-zinc-800/30 space-y-3">
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 block">
+                OpenSky Client ID
+              </label>
+              <input
+                type="text"
+                value={openskyClientId}
+                onChange={(e) => {
+                  setOpenskyClientId(e.target.value);
+                  localStorage.setItem('opensky_client_id', e.target.value);
+                }}
+                placeholder="e.g. myusername-api-client"
+                className="w-full bg-zinc-900/50 border border-zinc-700/30 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-1.5 block">
+                OpenSky Client Secret
+              </label>
+              <input
+                type="password"
+                value={openskyClientSecret}
+                onChange={(e) => {
+                  setOpenskyClientSecret(e.target.value);
+                  localStorage.setItem('opensky_client_secret', e.target.value);
+                }}
+                placeholder="Your client secret"
+                className="w-full bg-zinc-900/50 border border-zinc-700/30 rounded-lg px-3 py-2 text-sm text-gray-200 placeholder-gray-600 focus:outline-none focus:border-blue-500/50 font-mono"
+              />
+            </div>
+            <p className="text-xxs text-gray-600">
+              Get free credentials at <a href="https://opensky-network.org/index.php/login" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">opensky-network.org</a>. Stored in your browser only.
+            </p>
+          </div>
           <div className="mt-4 pt-4 border-t border-zinc-800/30">
             <label className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2 block">
               Admin API Key (for ETL triggers)

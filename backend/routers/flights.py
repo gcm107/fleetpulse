@@ -2,7 +2,7 @@
 
 import logging
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, Header, HTTPException, Query
 from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -28,15 +28,22 @@ class WatchlistRequest(BaseModel):
     n_number: str
 
 
-def _lookup_live_position(hex_codes: list[str]) -> list[dict]:
+def _lookup_live_position(
+    hex_codes: list[str],
+    user_client_id: str | None = None,
+    user_client_secret: str | None = None,
+) -> list[dict]:
     """Query OpenSky for real-time positions of aircraft by hex codes."""
     if not hex_codes:
         return []
 
     token = None
-    if settings.OPENSKY_CLIENT_ID and settings.OPENSKY_CLIENT_SECRET:
+    # Prefer user-provided credentials, fall back to server env vars
+    client_id = user_client_id or settings.OPENSKY_CLIENT_ID
+    client_secret = user_client_secret or settings.OPENSKY_CLIENT_SECRET
+    if client_id and client_secret:
         try:
-            token = get_opensky_token(settings.OPENSKY_CLIENT_ID, settings.OPENSKY_CLIENT_SECRET)
+            token = get_opensky_token(client_id, client_secret)
         except Exception as e:
             logger.warning(f"OpenSky auth failed, using anonymous: {e}")
 
@@ -78,11 +85,17 @@ def read_live_flights(db: Session = Depends(get_db)):
 
 
 @router.get("/lookup/{n_number}")
-def lookup_live_aircraft(n_number: str, db: Session = Depends(get_db)):
+def lookup_live_aircraft(
+    n_number: str,
+    db: Session = Depends(get_db),
+    x_opensky_client_id: str | None = Header(None),
+    x_opensky_client_secret: str | None = Header(None),
+):
     """Real-time lookup: find an aircraft's current position via OpenSky.
 
     Takes an N-number, looks up the transponder hex code, queries OpenSky,
     and returns the live position if the aircraft is airborne.
+    Accepts optional X-OpenSky-Client-Id and X-OpenSky-Client-Secret headers.
     """
     cleaned = n_number.strip().upper()
     if cleaned.startswith("N"):
@@ -102,7 +115,9 @@ def lookup_live_aircraft(n_number: str, db: Session = Depends(get_db)):
             detail=f"N{cleaned} has no transponder hex code on file"
         )
 
-    positions = _lookup_live_position([hex_code])
+    positions = _lookup_live_position(
+        [hex_code], x_opensky_client_id, x_opensky_client_secret
+    )
 
     if not positions:
         return {
@@ -132,6 +147,8 @@ def lookup_live_by_type(
     manufacturer: str = Query(..., min_length=1),
     model: str = Query(""),
     db: Session = Depends(get_db),
+    x_opensky_client_id: str | None = Header(None),
+    x_opensky_client_secret: str | None = Header(None),
 ):
     """Look up all currently airborne aircraft of a given manufacturer/model.
 
@@ -177,7 +194,9 @@ def lookup_live_by_type(
     batch_size = 50
     for i in range(0, len(hex_codes), batch_size):
         batch = hex_codes[i:i + batch_size]
-        positions = _lookup_live_position(batch)
+        positions = _lookup_live_position(
+            batch, x_opensky_client_id, x_opensky_client_secret
+        )
         all_positions.extend(positions)
 
     results = []

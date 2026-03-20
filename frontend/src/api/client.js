@@ -47,8 +47,17 @@ export const getOperatorEnforcement = (certNumber) => api.get(`/operators/${cert
 export const getSafetyComparison = (operatorIds) => api.get('/safety/compare', { params: { operators: operatorIds } });
 
 export const getLiveTracking = () => api.get('/tracking/live');
-export const lookupLiveAircraft = (nNumber) => api.get(`/tracking/lookup/${nNumber}`);
-export const lookupLiveByType = (manufacturer, model) => api.get('/tracking/lookup/type', { params: { manufacturer, model } });
+function _openskyHeaders() {
+  const clientId = localStorage.getItem('opensky_client_id');
+  const clientSecret = localStorage.getItem('opensky_client_secret');
+  if (clientId && clientSecret) {
+    return { 'X-OpenSky-Client-Id': clientId, 'X-OpenSky-Client-Secret': clientSecret };
+  }
+  return {};
+}
+
+export const lookupLiveAircraft = (nNumber) => api.get(`/tracking/lookup/${nNumber}`, { headers: _openskyHeaders() });
+export const lookupLiveByType = (manufacturer, model) => api.get('/tracking/lookup/type', { params: { manufacturer, model }, headers: _openskyHeaders() });
 export const addToWatchlist = (nNumber) => api.post('/tracking/watch', { n_number: nNumber });
 export const removeFromWatchlist = (nNumber) => api.delete(`/tracking/watch/${nNumber}`);
 export const getSanctionsAlerts = () => api.get('/sanctions/alerts');

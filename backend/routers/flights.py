@@ -84,7 +84,7 @@ def read_live_flights(db: Session = Depends(get_db)):
     }
 
 
-@router.get("/lookup/{n_number}")
+@router.get("/lookup/aircraft/{n_number}")
 def lookup_live_aircraft(
     n_number: str,
     db: Session = Depends(get_db),

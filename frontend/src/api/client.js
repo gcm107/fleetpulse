@@ -56,7 +56,7 @@ function _openskyHeaders() {
   return {};
 }
 
-export const lookupLiveAircraft = (nNumber) => api.get(`/tracking/lookup/${nNumber}`, { headers: _openskyHeaders() });
+export const lookupLiveAircraft = (nNumber) => api.get(`/tracking/lookup/aircraft/${nNumber}`, { headers: _openskyHeaders() });
 export const lookupLiveByType = (manufacturer, model) => api.get('/tracking/lookup/type', { params: { manufacturer, model }, headers: _openskyHeaders() });
 export const lookupLiveByCallsign = (callsign) => api.get('/tracking/lookup/callsign', { params: { callsign }, headers: _openskyHeaders() });
 export const addToWatchlist = (nNumber) => api.post('/tracking/watch', { n_number: nNumber });

@@ -6,7 +6,6 @@ import {
   Database,
   RefreshCw,
   Clock,
-  CheckCircle2,
   XCircle,
   ArrowRight,
   ShieldAlert,
@@ -199,7 +198,7 @@ export default function Dashboard() {
       )}
 
       {/* Stat cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatCard
           icon={Building2}
           label="Airports"
@@ -214,28 +213,25 @@ export default function Dashboard() {
           color="text-green-400"
           subtext="FAA registrations"
         />
-        <StatCard
-          icon={Activity}
-          label="Safety Scores"
-          value={stats?.aircraft != null ? Number(stats.aircraft).toLocaleString() : '--'}
-          color="text-orange-400"
-          subtext="Aircraft scored"
-        />
-        <StatCard
-          icon={Activity}
-          label="NTSB Accidents"
-          value={ntsb_count != null ? Number(ntsb_count).toLocaleString() : '--'}
-          color="text-blue-300"
-          subtext="Accident records"
-        />
-        <StatCard
-          icon={ShieldAlert}
-          label="Sanctions Alerts"
-          value={sanctionsAlerts.length}
-          color="text-red-400"
-          subtext={sanctionsAlerts.length > 0 ? 'Requires review' : 'All clear'}
-          linkTo="/sanctions"
-        />
+        {ntsb_count > 0 && (
+          <StatCard
+            icon={Activity}
+            label="NTSB Accidents"
+            value={Number(ntsb_count).toLocaleString()}
+            color="text-blue-300"
+            subtext="Accident records"
+          />
+        )}
+        {sanctionsAlerts.length > 0 && (
+          <StatCard
+            icon={ShieldAlert}
+            label="Sanctions Alerts"
+            value={sanctionsAlerts.length}
+            color="text-red-400"
+            subtext="Requires review"
+            linkTo="/sanctions"
+          />
+        )}
       </div>
 
       {/* Data freshness and ETL runs */}
@@ -265,14 +261,14 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Sanctions alerts preview */}
-        <div className="card">
-          <div className="card-header flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
-              Sanctions Alerts
-            </div>
-            {sanctionsAlerts.length > 0 && (
+        {/* Sanctions alerts preview - only shown when there are active alerts */}
+        {sanctionsAlerts.length > 0 && (
+          <div className="card">
+            <div className="card-header flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <ShieldAlert className="w-3.5 h-3.5 text-red-400" />
+                Sanctions Alerts
+              </div>
               <Link
                 to="/sanctions"
                 className="text-xxs text-blue-400 hover:text-blue-300 font-medium flex items-center gap-1"
@@ -280,9 +276,7 @@ export default function Dashboard() {
                 View All
                 <ArrowRight className="w-3 h-3" />
               </Link>
-            )}
-          </div>
-          {sanctionsAlerts.length > 0 ? (
+            </div>
             <div>
               {sanctionsAlerts.slice(0, 5).map((alert, i) => (
                 <SanctionsAlertPreview key={alert.id || i} alert={alert} />
@@ -293,13 +287,8 @@ export default function Dashboard() {
                 </p>
               )}
             </div>
-          ) : (
-            <div className="text-center py-6">
-              <CheckCircle2 className="w-6 h-6 text-green-400/40 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">No active sanctions alerts</p>
-            </div>
-          )}
-        </div>
+          </div>
+        )}
       </div>
 
       {/* Recent ETL runs */}

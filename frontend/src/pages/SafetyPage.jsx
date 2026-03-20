@@ -10,50 +10,9 @@ import {
 } from 'lucide-react';
 import { searchOperators, getSafetyComparison } from '../api/client';
 import ComparisonView from '../components/safety/ComparisonView';
-import AccidentList from '../components/safety/AccidentList';
 import { SCORE_THRESHOLDS } from '../utils/constants';
 
 const MAX_OPERATORS = 4;
-
-// Placeholder recent accidents for display
-const PLACEHOLDER_ACCIDENTS = [
-  {
-    ntsb_number: 'ERA25FA001',
-    event_date: '2025-12-15',
-    event_type: 'Accident',
-    city: 'Fort Lauderdale',
-    state: 'FL',
-    aircraft_make: 'Cessna',
-    aircraft_model: '172S',
-    highest_injury: 'None',
-    aircraft_damage: 'Substantial',
-    probable_cause: 'The pilot\'s failure to maintain adequate airspeed during the approach, which resulted in an aerodynamic stall.',
-  },
-  {
-    ntsb_number: 'CEN25IA002',
-    event_date: '2025-11-28',
-    event_type: 'Incident',
-    city: 'Dallas',
-    state: 'TX',
-    aircraft_make: 'Boeing',
-    aircraft_model: '737-800',
-    highest_injury: 'None',
-    aircraft_damage: 'Minor',
-    probable_cause: null,
-  },
-  {
-    ntsb_number: 'WPR25FA003',
-    event_date: '2025-11-10',
-    event_type: 'Accident',
-    city: 'Van Nuys',
-    state: 'CA',
-    aircraft_make: 'Piper',
-    aircraft_model: 'PA-28-181',
-    highest_injury: 'Serious',
-    aircraft_damage: 'Destroyed',
-    probable_cause: 'The pilot\'s decision to continue VFR flight into instrument meteorological conditions.',
-  },
-];
 
 function OperatorChip({ name, onRemove }) {
   return (
@@ -261,17 +220,37 @@ export default function SafetyPage() {
               <ComparisonView operators={comparisonData} />
             </div>
           )}
+
+          {/* Data availability notice */}
+          {!comparisonData && !compareError && selectedOperators.length === 0 && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-zinc-800/30 border border-zinc-700/30">
+              <Info className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" />
+              <p className="text-xs text-gray-500">
+                Safety scores require NTSB accident data and FAA enforcement records to compute. These data sources will be integrated in a future update.
+              </p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Recent NTSB Accidents */}
+      {/* About Safety Analysis */}
       <div className="card">
         <div className="card-header flex items-center gap-2">
           <AlertTriangle className="w-3.5 h-3.5" />
-          Recent NTSB Reports
-          <span className="text-gray-600 font-normal text-xs">(sample data)</span>
+          About Safety Analysis
         </div>
-        <AccidentList accidents={PLACEHOLDER_ACCIDENTS} />
+        <div className="space-y-3 text-sm text-gray-400 leading-relaxed">
+          <p>
+            The Safety Analysis module compares operator safety records using data from multiple
+            federal sources including NTSB accident reports, FAA enforcement actions, and service
+            difficulty reports (SDRs).
+          </p>
+          <p>
+            Safety scores require NTSB accident data and FAA enforcement records to compute.
+            These data sources will be integrated in a future update. Once available, operators
+            can be compared side-by-side using the search tool above.
+          </p>
+        </div>
       </div>
 
       {/* Scoring Methodology */}

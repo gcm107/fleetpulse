@@ -405,7 +405,17 @@ export default function AircraftPage() {
           <Shield className="w-3.5 h-3.5" />
           Safety Score
         </div>
-        <SafetyScorecard score={safetyData?.score || safetyData?.safety_score || null} />
+        {safetyData?.score || safetyData?.safety_score ? (
+          <SafetyScorecard score={safetyData?.score || safetyData?.safety_score} />
+        ) : (
+          <div className="text-center py-10">
+            <Shield className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+            <p className="text-sm text-gray-400 font-medium mb-1">No safety score available</p>
+            <p className="text-xs text-gray-500 max-w-md mx-auto">
+              Safety scoring requires NTSB and enforcement data integration.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Accident History */}
@@ -429,7 +439,17 @@ export default function AircraftPage() {
           <AlertTriangle className="w-3.5 h-3.5" />
           Sanctions Screening
         </div>
-        <SanctionsCheck result={sanctionsData} />
+        {sanctionsData && !sanctionsData.has_match && (!sanctionsData.matches || sanctionsData.matches.length === 0) && !sanctionsData.checked_at ? (
+          <div className="text-center py-8">
+            <Shield className="w-10 h-10 text-gray-600 mx-auto mb-3" />
+            <p className="text-sm text-gray-400 font-medium mb-1">Sanctions screening unavailable</p>
+            <p className="text-xs text-gray-500 max-w-md mx-auto">
+              OFAC SDN screening is available when the sanctions database is loaded.
+            </p>
+          </div>
+        ) : (
+          <SanctionsCheck result={sanctionsData} />
+        )}
       </div>
     </div>
   );

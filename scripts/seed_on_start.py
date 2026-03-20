@@ -70,39 +70,11 @@ def main():
     else:
         logger.info(f"Aircraft already loaded: {table_count('aircraft'):,} records")
 
-    # Step 4: Seed sample data if empty
-    if table_count("ntsb_accidents") == 0:
-        logger.info("Seeding NTSB sample data...")
-        try:
-            from backend.etl.ntsb import run_ntsb_etl
-            run_ntsb_etl(DB_FILE)
-        except Exception as e:
-            logger.error(f"NTSB seed failed: {e}")
-
-    if table_count("enforcement_actions") == 0:
-        logger.info("Seeding enforcement sample data...")
-        try:
-            from backend.etl.enforcement import run_enforcement_etl
-            run_enforcement_etl(DB_FILE)
-        except Exception as e:
-            logger.error(f"Enforcement seed failed: {e}")
-
-    if table_count("ofac_sdn") == 0:
-        logger.info("Seeding OFAC sample data...")
-        try:
-            from backend.etl.ofac import generate_sample_ofac_data
-            generate_sample_ofac_data(DB_FILE)
-        except Exception as e:
-            logger.error(f"OFAC seed failed: {e}")
-
-    # Step 5: Compute safety scores if empty
-    if table_count("safety_scores") == 0:
-        logger.info("Computing operator safety scores...")
-        try:
-            from backend.etl.safety_scores import compute_operator_scores
-            compute_operator_scores(DB_FILE)
-        except Exception as e:
-            logger.error(f"Safety scores failed: {e}")
+    # Note: NTSB, enforcement, OFAC, operators, and safety scores
+    # are NOT seeded with sample data. Only real data from actual
+    # public sources (FAA registry, OurAirports) is loaded.
+    # The sanctions, safety, and enforcement features will show
+    # empty states until real data ETLs are implemented.
 
     logger.info(f"Seed complete. Airports: {table_count('airports'):,}, Aircraft: {table_count('aircraft'):,}")
     logger.info("Starting server...")

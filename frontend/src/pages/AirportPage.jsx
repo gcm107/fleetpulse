@@ -17,6 +17,7 @@ import LoadingSpinner from '../components/common/LoadingSpinner';
 import Badge from '../components/common/Badge';
 import DataTable from '../components/common/DataTable';
 import AlertBanner from '../components/common/AlertBanner';
+import AirportMap from '../components/airport/AirportMap';
 import {
   formatCoordinate,
   formatElevation,
@@ -25,7 +26,6 @@ import {
 } from '../utils/formatters';
 import { AIRPORT_TYPES } from '../utils/constants';
 import AirportWeather from '../components/airport/AirportWeather';
-import AirportMap from '../components/airport/AirportMap';
 
 function InfoField({ label, value, mono = false, icon: Icon }) {
   return (
@@ -210,10 +210,10 @@ export default function AirportPage() {
       </div>
 
       {/* Airport Map */}
-      {airport?.latitude_deg != null && airport?.longitude_deg != null && (
+      {airport?.latitude != null && airport?.longitude != null && (
         <AirportMap
-          latitude={airport.latitude_deg}
-          longitude={airport.longitude_deg}
+          latitude={airport.latitude}
+          longitude={airport.longitude}
           name={airport.name}
           icao_code={airport.icao_code}
         />
@@ -229,12 +229,12 @@ export default function AirportPage() {
           <div className="space-y-3">
             <InfoField
               label="Latitude"
-              value={formatCoordinate(airport?.latitude_deg, 'lat')}
+              value={formatCoordinate(airport?.latitude, 'lat')}
               mono
             />
             <InfoField
               label="Longitude"
-              value={formatCoordinate(airport?.longitude_deg, 'lon')}
+              value={formatCoordinate(airport?.longitude, 'lon')}
               mono
             />
             <InfoField

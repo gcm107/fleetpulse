@@ -149,7 +149,11 @@ export default function SettingsPage() {
                 key={apiKey.key}
                 label={apiKey.label}
                 description={apiKey.description}
-                configured={apiKeyStatuses[apiKey.key] || false}
+                configured={
+                  apiKey.key === 'opensky'
+                    ? !!(openskyClientId && openskyClientSecret)
+                    : (apiKeyStatuses[apiKey.key] || false)
+                }
               />
             ))}
           </div>

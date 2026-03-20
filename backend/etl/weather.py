@@ -58,9 +58,14 @@ def fetch_metar(station_ids: list[str]) -> list[dict]:
         logger.error("METAR connection error: %s", e)
         return []
 
-    data = resp.json()
+    if resp.status_code == 204 or not resp.text.strip():
+        return []
+
+    try:
+        data = resp.json()
+    except Exception:
+        return []
     if not isinstance(data, list):
-        logger.warning("Unexpected METAR response format: %s", type(data))
         return []
 
     logger.info("Fetched %d METAR observations", len(data))
@@ -94,9 +99,14 @@ def fetch_taf(station_ids: list[str]) -> list[dict]:
         logger.error("TAF connection error: %s", e)
         return []
 
-    data = resp.json()
+    if resp.status_code == 204 or not resp.text.strip():
+        return []
+
+    try:
+        data = resp.json()
+    except Exception:
+        return []
     if not isinstance(data, list):
-        logger.warning("Unexpected TAF response format: %s", type(data))
         return []
 
     logger.info("Fetched %d TAF forecasts", len(data))
